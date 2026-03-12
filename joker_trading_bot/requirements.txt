@@ -1,0 +1,10 @@
+python-telegram-bot
+yfinance
+fastapi
+uvicorn
+ta
+pytz
+apscheduler
+pandas
+httpx
+requests

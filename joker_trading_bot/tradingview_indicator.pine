@@ -1,0 +1,71 @@
+//@version=5
+indicator("Joker Trading 15M Signals", shorttitle="Joker 15M", overlay=true)
+
+// =========================================================================
+// INPUTS
+// =========================================================================
+// EMA Settings
+emaLength = input.int(100, title="EMA Length", group="Trend")
+
+// Bollinger Bands Settings
+bbLength = input.int(20, title="BB Length", group="Bollinger Bands")
+bbMult = input.float(2.0, title="BB Multiplier", group="Bollinger Bands")
+
+// RSI Settings
+rsiLength = input.int(14, title="RSI Length", group="Oscillator")
+rsiOverbought = input.int(70, title="RSI Overbought", group="Oscillator")
+rsiOversold = input.int(30, title="RSI Oversold", group="Oscillator")
+
+// =========================================================================
+// CALCULATIONS
+// =========================================================================
+// EMA
+ema100 = ta.ema(close, emaLength)
+
+// Bollinger Bands
+basis = ta.sma(close, bbLength)
+dev = bbMult * ta.stdev(close, bbLength)
+upperBB = basis + dev
+lowerBB = basis - dev
+
+// RSI
+rsi = ta.rsi(close, rsiLength)
+
+// =========================================================================
+// SIGNAL CONDITIONS
+// =========================================================================
+// CALL (Buy) Condition:
+// 1. Price is below EMA 100 (Downtrend)
+// 2. Price touches or crosses below BB Lower Band
+// 3. RSI is below oversold level (30)
+callCondition = (close < ema100) and (low <= lowerBB) and (rsi < rsiOversold)
+
+// PUT (Sell) Condition:
+// 1. Price is above EMA 100 (Uptrend)
+// 2. Price touches or crosses above BB Upper Band
+// 3. RSI is above overbought level (70)
+putCondition = (close > ema100) and (high >= upperBB) and (rsi > rsiOverbought)
+
+// =========================================================================
+// PLOTTING
+// =========================================================================
+// Plot EMA
+plot(ema100, color=color.yellow, linewidth=2, title="EMA 100")
+
+// Plot Bollinger Bands
+p1 = plot(upperBB, color=color.blue, title="Upper Band")
+p2 = plot(lowerBB, color=color.blue, title="Lower Band")
+fill(p1, p2, color=color.new(color.blue, 90), title="BB Background")
+
+// Plot Signals
+plotshape(callCondition, title="CALL Signal", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.normal, text="CALL\n15M")
+plotshape(putCondition, title="PUT Signal", location=location.abovebar, color=color.red, style=shape.triangledown, size=size.normal, text="PUT\n15M")
+
+// =========================================================================
+// ALERTS
+// =========================================================================
+// Alert for CALL
+alertcondition(callCondition, title="CALL Signal Alert", message='{"symbol": "{{ticker}}", "signal": "CALL", "timeframe": "5m", "duration": "15", "price": "{{close}}"}')
+
+// Alert for PUT
+alertcondition(putCondition, title="PUT Signal Alert", message='{"symbol": "{{ticker}}", "signal": "PUT", "timeframe": "5m", "duration": "15", "price": "{{close}}"}')
